@@ -842,6 +842,356 @@ def bulk_show_documents():
 
 
 # ============================================================================
+# ANALYTICS VISIBILITY CONTROL ENDPOINTS (ADMIN)
+# ============================================================================
+
+@app.route('/api/admin/analytics/enable/<user_id>', methods=['POST'])
+@admin_required
+def enable_user_analytics(user_id):
+    """Enable analytics visibility for a specific user (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('enable_user_analytics', {
+            'target_user_id': user_id,
+            'admin_id': admin_id
+        }).execute()
+
+        if response.data:
+            return jsonify({
+                'success': True,
+                'message': f'Analytics enabled for user {user_id}'
+            })
+        else:
+            return jsonify({'error': 'Failed to enable analytics'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error enabling analytics: {str(e)}'}), 500
+
+
+@app.route('/api/admin/analytics/disable/<user_id>', methods=['POST'])
+@admin_required
+def disable_user_analytics(user_id):
+    """Disable analytics visibility for a specific user (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('disable_user_analytics', {
+            'target_user_id': user_id,
+            'admin_id': admin_id
+        }).execute()
+
+        if response.data:
+            return jsonify({
+                'success': True,
+                'message': f'Analytics disabled for user {user_id}'
+            })
+        else:
+            return jsonify({'error': 'Failed to disable analytics'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error disabling analytics: {str(e)}'}), 500
+
+
+@app.route('/api/admin/analytics/bulk-enable', methods=['POST'])
+@admin_required
+def bulk_enable_analytics():
+    """Bulk enable analytics for multiple users (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    data = request.get_json()
+    user_ids = data.get('user_ids', [])
+
+    if not user_ids:
+        return jsonify({'error': 'No user IDs provided'}), 400
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('bulk_enable_analytics', {
+            'user_ids': user_ids,
+            'admin_id': admin_id
+        }).execute()
+
+        updated_count = response.data if response.data else 0
+
+        return jsonify({
+            'success': True,
+            'message': f'Analytics enabled for {updated_count} user(s)',
+            'updated_count': updated_count
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error bulk enabling analytics: {str(e)}'}), 500
+
+
+@app.route('/api/admin/analytics/bulk-disable', methods=['POST'])
+@admin_required
+def bulk_disable_analytics():
+    """Bulk disable analytics for multiple users (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    data = request.get_json()
+    user_ids = data.get('user_ids', [])
+
+    if not user_ids:
+        return jsonify({'error': 'No user IDs provided'}), 400
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('bulk_disable_analytics', {
+            'user_ids': user_ids,
+            'admin_id': admin_id
+        }).execute()
+
+        updated_count = response.data if response.data else 0
+
+        return jsonify({
+            'success': True,
+            'message': f'Analytics disabled for {updated_count} user(s)',
+            'updated_count': updated_count
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error bulk disabling analytics: {str(e)}'}), 500
+
+
+@app.route('/api/admin/analytics/status/<user_id>', methods=['GET'])
+@admin_required
+def get_analytics_status(user_id):
+    """Get analytics visibility status for a user (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    try:
+        response = supabase_client.table('user_profiles')\
+            .select('analytics_visible, analytics_visibility_updated_by, analytics_visibility_updated_at')\
+            .eq('id', user_id)\
+            .execute()
+
+        if response.data and len(response.data) > 0:
+            data = response.data[0]
+            return jsonify({
+                'success': True,
+                'user_id': user_id,
+                'analytics_visible': data.get('analytics_visible', False),
+                'updated_by': data.get('analytics_visibility_updated_by'),
+                'updated_at': data.get('analytics_visibility_updated_at')
+            })
+        else:
+            return jsonify({'error': 'User not found'}), 404
+
+    except Exception as e:
+        return jsonify({'error': f'Error getting analytics status: {str(e)}'}), 500
+
+
+@app.route('/api/admin/users/list', methods=['GET'])
+@admin_required
+def list_all_users():
+    """List all users with their analytics status (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    try:
+        response = supabase_client.table('user_profiles')\
+            .select('id, email, role, analytics_visible, created_at')\
+            .order('created_at', desc=True)\
+            .execute()
+
+        users = response.data if response.data else []
+
+        return jsonify({
+            'success': True,
+            'users': users,
+            'count': len(users)
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error listing users: {str(e)}'}), 500
+
+
+# ============================================================================
+# KNOWLEDGE BASE VISIBILITY CONTROL ENDPOINTS (ADMIN)
+# ============================================================================
+
+@app.route('/api/admin/knowledge-base/hide/<store_id>', methods=['POST'])
+@admin_required
+def hide_knowledge_base(store_id):
+    """Hide a knowledge base from list (Admin only) - Still queryable"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('hide_knowledge_base', {
+            'store_id_param': store_id,
+            'admin_id': admin_id
+        }).execute()
+
+        if response.data:
+            return jsonify({
+                'success': True,
+                'message': f'Knowledge base hidden from list (still queryable)'
+            })
+        else:
+            return jsonify({'error': 'Failed to hide knowledge base'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error hiding knowledge base: {str(e)}'}), 500
+
+
+@app.route('/api/admin/knowledge-base/show/<store_id>', methods=['POST'])
+@admin_required
+def show_knowledge_base(store_id):
+    """Show a hidden knowledge base in list (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('show_knowledge_base', {
+            'store_id_param': store_id,
+            'admin_id': admin_id
+        }).execute()
+
+        if response.data:
+            return jsonify({
+                'success': True,
+                'message': 'Knowledge base is now visible in list'
+            })
+        else:
+            return jsonify({'error': 'Failed to show knowledge base'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error showing knowledge base: {str(e)}'}), 500
+
+
+@app.route('/api/admin/knowledge-base/bulk-hide', methods=['POST'])
+@admin_required
+def bulk_hide_knowledge_bases():
+    """Bulk hide knowledge bases (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    data = request.get_json()
+    store_ids = data.get('store_ids', [])
+
+    if not store_ids:
+        return jsonify({'error': 'No store IDs provided'}), 400
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('bulk_hide_knowledge_bases', {
+            'store_ids': store_ids,
+            'admin_id': admin_id
+        }).execute()
+
+        updated_count = response.data if response.data else 0
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully hid {updated_count} knowledge base(s)',
+            'updated_count': updated_count
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error bulk hiding knowledge bases: {str(e)}'}), 500
+
+
+@app.route('/api/admin/knowledge-base/bulk-show', methods=['POST'])
+@admin_required
+def bulk_show_knowledge_bases():
+    """Bulk show knowledge bases (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    data = request.get_json()
+    store_ids = data.get('store_ids', [])
+
+    if not store_ids:
+        return jsonify({'error': 'No store IDs provided'}), 400
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('bulk_show_knowledge_bases', {
+            'store_ids': store_ids,
+            'admin_id': admin_id
+        }).execute()
+
+        updated_count = response.data if response.data else 0
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully showed {updated_count} knowledge base(s)',
+            'updated_count': updated_count
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error bulk showing knowledge bases: {str(e)}'}), 500
+
+
+@app.route('/api/admin/knowledge-base/all', methods=['GET'])
+@admin_required
+def get_all_knowledge_bases():
+    """Get all knowledge bases including hidden ones (Admin only)"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    admin_id = session.get('user_id')
+
+    try:
+        response = supabase_client.rpc('get_all_knowledge_bases', {
+            'admin_id': admin_id
+        }).execute()
+
+        stores = response.data if response.data else []
+
+        return jsonify({
+            'success': True,
+            'stores': stores,
+            'count': len(stores)
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error getting knowledge bases: {str(e)}'}), 500
+
+
+@app.route('/api/knowledge-base/visible', methods=['GET'])
+@login_required
+def get_visible_knowledge_bases():
+    """Get visible knowledge bases for regular users"""
+    if supabase_client is None:
+        return jsonify({'error': 'Database not configured'}), 500
+
+    try:
+        response = supabase_client.rpc('get_visible_knowledge_bases').execute()
+
+        stores = response.data if response.data else []
+
+        return jsonify({
+            'success': True,
+            'stores': stores,
+            'count': len(stores)
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error getting visible knowledge bases: {str(e)}'}), 500
+
+
+# ============================================================================
 # MEMORY MANAGEMENT ENDPOINTS
 # ============================================================================
 
@@ -954,13 +1304,29 @@ def clear_memories():
 @app.route('/api/memory/analytics', methods=['GET'])
 @login_required
 def get_memory_analytics():
-    """Get memory analytics for current user"""
+    """Get memory analytics for current user (if analytics are enabled)"""
     if rag_orchestrator is None or not rag_orchestrator.memory_enabled:
         return jsonify({'error': 'Memory system not available'}), 500
 
     user_id = session.get('user_id')
+    user_role = session.get('user_role', 'user')
 
     try:
+        # Check if analytics are visible for this user
+        if user_role != 'admin' and supabase_client:
+            response = supabase_client.table('user_profiles')\
+                .select('analytics_visible')\
+                .eq('id', user_id)\
+                .execute()
+
+            if response.data and len(response.data) > 0:
+                analytics_visible = response.data[0].get('analytics_visible', False)
+                if not analytics_visible:
+                    return jsonify({
+                        'error': 'Analytics are not enabled for your account. Contact an administrator.',
+                        'analytics_enabled': False
+                    }), 403
+
         # Get all memories
         memories = rag_orchestrator.get_user_memories(user_id=user_id, limit=100)
 
@@ -995,6 +1361,7 @@ def get_memory_analytics():
 
         return jsonify({
             'success': True,
+            'analytics_enabled': True,
             'analytics': {
                 'total_memories': total_memories,
                 'query_type_distribution': query_types,
@@ -1010,14 +1377,29 @@ def get_memory_analytics():
 @app.route('/api/memory/export', methods=['GET'])
 @login_required
 def export_memories():
-    """Export memories as CSV"""
+    """Export memories as CSV (if analytics are enabled)"""
     if rag_orchestrator is None or not rag_orchestrator.memory_enabled:
         return jsonify({'error': 'Memory system not available'}), 500
 
     user_id = session.get('user_id')
+    user_role = session.get('user_role', 'user')
     format_type = request.args.get('format', 'csv')
 
     try:
+        # Check if analytics are visible for this user
+        if user_role != 'admin' and supabase_client:
+            response = supabase_client.table('user_profiles')\
+                .select('analytics_visible')\
+                .eq('id', user_id)\
+                .execute()
+
+            if response.data and len(response.data) > 0:
+                analytics_visible = response.data[0].get('analytics_visible', False)
+                if not analytics_visible:
+                    return jsonify({
+                        'error': 'Analytics/export are not enabled for your account. Contact an administrator.'
+                    }), 403
+
         memories = rag_orchestrator.get_user_memories(user_id=user_id, limit=1000)
 
         if format_type == 'json':
@@ -1105,14 +1487,39 @@ def clear_conversation():
 
 @app.route('/stores')
 def list_stores():
-    """List all available stores"""
+    """List available stores (visible only for non-admins)"""
     if rag_orchestrator is None:
         return jsonify({'error': 'RAG system not initialized'}), 500
 
+    user_role = session.get('user_role', 'user')
+    user_id = session.get('user_id')
+
     try:
-        stores = rag_orchestrator.file_manager.list_stores()
-        store_list = [{'name': store.name, 'display_name': store.display_name} for store in stores]
-        return jsonify({'stores': store_list})
+        # If admin, show all stores; otherwise only visible ones
+        if user_role == 'admin':
+            # Get all stores from database
+            if supabase_client:
+                response = supabase_client.rpc('get_all_knowledge_bases', {
+                    'admin_id': user_id
+                }).execute()
+                stores = response.data if response.data else []
+                store_list = [{'id': s['id'], 'store_id': s['store_id'], 'store_name': s['store_name'],
+                              'description': s.get('description'), 'is_visible': s.get('is_visible', True)} for s in stores]
+            else:
+                stores = rag_orchestrator.file_manager.list_stores()
+                store_list = [{'name': store.name, 'display_name': store.display_name} for store in stores]
+        else:
+            # Get only visible stores for regular users
+            if supabase_client:
+                response = supabase_client.rpc('get_visible_knowledge_bases').execute()
+                stores = response.data if response.data else []
+                store_list = [{'id': s['id'], 'store_id': s['store_id'], 'store_name': s['store_name'],
+                              'description': s.get('description')} for s in stores]
+            else:
+                stores = rag_orchestrator.file_manager.list_stores()
+                store_list = [{'name': store.name, 'display_name': store.display_name} for store in stores]
+
+        return jsonify({'stores': store_list, 'count': len(store_list)})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

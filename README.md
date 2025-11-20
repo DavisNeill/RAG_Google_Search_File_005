@@ -15,6 +15,13 @@ The system implements a true agentic architecture with specialized agents and pe
 - **ResponseAgent**: Generates personalized responses with citations and memory
 - **AgentOrchestrator**: Coordinates all agents and manages workflow
 
+### Admin Visibility Controls (🆕 NEW!)
+
+- **Analytics Visibility Control**: Admins control which users can view their analytics (hidden by default)
+- **Knowledge Base Visibility**: Admins can hide knowledge bases from listings while keeping them queryable
+- **Granular Permissions**: Individual and bulk operations for fine-grained control
+- **Audit Trail**: Tracks all visibility changes with timestamps and admin IDs
+
 ### Key Capabilities
 
 - **Long-Term Memory (NEW)**: Remembers user preferences, query patterns, and learns from interactions using Mem0
@@ -323,11 +330,45 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 This project is provided as-is for educational and development purposes.
 
+## Admin Visibility Features
+
+The system now includes powerful admin controls for managing user analytics and knowledge base visibility:
+
+### Analytics Visibility Control
+- Analytics are **hidden by default** for all users
+- Admins can enable/disable analytics for individual users or in bulk
+- Users can only see their analytics if explicitly enabled
+- Includes tracking of who changed visibility and when
+
+### Knowledge Base Visibility Control
+- Admins can hide knowledge bases from listings
+- Hidden knowledge bases remain fully queryable (not deleted)
+- Useful for controlling access to sensitive information
+- Supports individual and bulk operations
+
+### Documentation
+- **Quick Reference**: See `VISIBILITY_QUICK_REFERENCE.md` for API endpoints and commands
+- **Full Documentation**: See `VISIBILITY_FEATURES.md` for complete guide with examples
+- **Database Schema**: See `database_schema_visibility_features.sql` for setup
+
+### Quick Example
+```bash
+# Enable analytics for a user (Admin only)
+POST /api/admin/analytics/enable/<user_id>
+
+# Hide a knowledge base from listings (Admin only)
+POST /api/admin/knowledge-base/hide/<store_id>
+
+# List all users with analytics status (Admin only)
+GET /api/admin/users/list
+```
+
 ## Resources
 
 - [Google Gemini API Documentation](https://ai.google.dev/gemini-api/docs/file-search)
 - [File Search Blog Post](https://blog.google/technology/developers/file-search-gemini-api/)
 - [Gemini API Pricing](https://ai.google.dev/pricing)
+- [Visibility Features Documentation](VISIBILITY_FEATURES.md) 🆕
 
 ## Architecture Details
 
