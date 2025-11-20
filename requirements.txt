@@ -20,3 +20,41 @@ pandas>=2.0.0
 
 # Optional dependencies for enhanced functionality
 python-dotenv>=1.0.0
+
+# ============================================================================
+# TIER 1: Production Essentials
+# ============================================================================
+
+# Rate Limiting
+Flask-Limiter>=3.5.0
+redis>=5.0.0
+
+# Logging & Monitoring
+structlog>=23.2.0
+python-json-logger>=2.0.7
+
+# ============================================================================
+# TIER 2: Performance & UX
+# ============================================================================
+
+# Caching Layer
+Flask-Caching>=2.1.0
+
+# WebSocket Support
+Flask-SocketIO>=5.3.5
+python-socketio>=5.10.0
+eventlet>=0.33.3
+
+# ============================================================================
+# TIER 3: Advanced Features
+# ============================================================================
+
+# Document Versioning (uses existing database)
+# No additional dependencies needed
+
+# ============================================================================
+# Production Server
+# ============================================================================
+
+# WSGI Server
+gunicorn>=21.2.0
