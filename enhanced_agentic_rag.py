@@ -1,8 +1,8 @@
 """
-Enhanced Agentic RAG System with Tier 1-3 Improvements
+Enhanced Agentic RAG System with Tier 1-6 Improvements
 ========================================================
 
-This module extends the base agentic_rag.py with 9 advanced features:
+This module extends the base agentic_rag.py with 14 advanced features:
 
 Tier 1: High-Impact
 - Hybrid Search (BM25 + Dense)
@@ -19,6 +19,18 @@ Tier 3: Advanced Intelligence
 - Self-Reflection/Answer Validation
 - Experiment Tracking
 
+Tier 4-5: Advanced RAG Techniques
+- Chain-of-Thought Reasoning
+- Adaptive Retrieval (Active RAG)
+- HyDE (Hypothetical Document Embeddings)
+- Parent Document Retrieval
+- GraphRAG (Graph-Enhanced Retrieval)
+
+Tier 6: Pydantic AI Integration (NEW!)
+- Structured Output Validation
+- Smart Model Routing
+- Logfire Observability
+
 Usage:
     from enhanced_agentic_rag import EnhancedAgenticRAG
 
@@ -29,6 +41,12 @@ Usage:
 
     # Use like normal, but with all improvements
     result = rag.query('complex question')
+
+    # Or use Pydantic AI features (structured output)
+    config = EnhancedConfig()
+    config.use_pydantic = True
+    rag = EnhancedAgenticRAG(api_key='your-key', config=config)
+    response = rag.query_v2('complex question')  # Returns RAGResponse
 """
 
 import os
@@ -53,6 +71,17 @@ from multihop_reasoning import QuestionDecomposer, create_multihop_system
 from self_reflection import create_reflection_system
 from experiment_tracking import create_tracker, ExperimentConfig
 
+# Import Tier 6: Pydantic AI features (optional)
+try:
+    from pydantic_wrapper import PydanticRAGWrapper, PydanticConfig
+    from structured_responses import RAGResponse, parse_legacy_response
+    from model_router import SmartModelRouter
+    from observability import setup_observability, get_manager
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+    print("[EnhancedRAG] Pydantic AI not available (install: pip install pydantic-ai logfire)")
+
 
 class EnhancedConfig:
     """Configuration for enhanced RAG features"""
@@ -76,6 +105,13 @@ class EnhancedConfig:
         self.max_hops = 3
         self.use_self_reflection = True
         self.use_experiment_tracking = False  # Enable for research
+
+        # Tier 6: Pydantic AI Integration
+        self.use_pydantic = False  # Enable Pydantic AI features
+        self.use_structured_output = False  # Structured, validated responses
+        self.use_model_routing = False  # Smart model selection
+        self.use_observability = False  # Logfire tracing
+        self.pydantic_cost_optimization = "balanced"  # "aggressive", "balanced", "quality"
 
         # Performance tuning
         self.retrieve_k = 20  # Retrieve this many candidates
@@ -144,6 +180,9 @@ class EnhancedAgenticRAG:
 
         # Initialize Tier 3 features
         self._init_tier3(supabase_client)
+
+        # Initialize Tier 6: Pydantic AI features
+        self._init_pydantic()
 
         print("[EnhancedRAG] ✓ All features initialized")
         print(f"[EnhancedRAG] Active features: {self._get_active_features()}")
@@ -246,6 +285,43 @@ class EnhancedAgenticRAG:
         else:
             self.tracker = None
 
+    def _init_pydantic(self):
+        """Initialize Tier 6: Pydantic AI features"""
+        if not self.config.use_pydantic or not PYDANTIC_AVAILABLE:
+            self.pydantic_wrapper = None
+            return
+
+        try:
+            # Create Pydantic configuration
+            pydantic_config = PydanticConfig(
+                enable_structured_output=self.config.use_structured_output,
+                enable_model_routing=self.config.use_model_routing,
+                enable_observability=self.config.use_observability,
+                cost_optimization_level=self.config.pydantic_cost_optimization,
+                enable_cloud_logging=False,  # Local-only by default
+                log_directory="./logs/pydantic",
+                service_name="enhanced-rag"
+            )
+
+            # Create Pydantic wrapper with this RAG instance
+            self.pydantic_wrapper = PydanticRAGWrapper(
+                gemini_api_key=self.base_rag.api_key,
+                base_rag=self,  # Pass this instance
+                config=pydantic_config
+            )
+
+            print("[EnhancedRAG] ✓ Pydantic AI features enabled:")
+            if self.config.use_structured_output:
+                print("  - Structured Output Validation")
+            if self.config.use_model_routing:
+                print(f"  - Model Routing ({self.config.pydantic_cost_optimization})")
+            if self.config.use_observability:
+                print("  - Logfire Observability")
+
+        except Exception as e:
+            print(f"[EnhancedRAG] ⚠ Failed to initialize Pydantic AI: {e}")
+            self.pydantic_wrapper = None
+
     def _get_active_features(self) -> str:
         """Get string of active features"""
         features = []
@@ -267,6 +343,16 @@ class EnhancedAgenticRAG:
             features.append("Self-Reflection")
         if self.config.use_experiment_tracking:
             features.append("Tracking")
+        if self.config.use_pydantic:
+            pydantic_features = []
+            if self.config.use_structured_output:
+                pydantic_features.append("Structured")
+            if self.config.use_model_routing:
+                pydantic_features.append("Routing")
+            if self.config.use_observability:
+                pydantic_features.append("Observability")
+            if pydantic_features:
+                features.append(f"Pydantic ({', '.join(pydantic_features)})")
 
         return ", ".join(features) if features else "None"
 
@@ -437,6 +523,96 @@ class EnhancedAgenticRAG:
         print(f"[EnhancedRAG] ✓ Query completed in {latency_ms:.0f}ms")
 
         return result
+
+    def query_v2(
+        self,
+        question: str,
+        store_name: Optional[str] = None,
+        metadata_filter: Optional[str] = None,
+        include_citations: bool = True,
+        user_id: Optional[str] = None,
+        force_model: Optional[str] = None
+    ):
+        """
+        Enhanced query with Pydantic AI features (Tier 6).
+
+        This method extends the base query() with:
+        - Structured, validated responses (RAGResponse)
+        - Smart model routing for cost optimization
+        - Deep observability with Logfire tracing
+
+        Args:
+            question: User question
+            store_name: Store to search
+            metadata_filter: Metadata filter
+            include_citations: Include citations
+            user_id: User ID for personalization
+            force_model: Force specific model (override routing)
+
+        Returns:
+            RAGResponse (structured) if Pydantic enabled, else Dict
+        """
+        # If Pydantic not enabled, fall back to regular query
+        if not self.config.use_pydantic or not self.pydantic_wrapper:
+            print("[EnhancedRAG] Pydantic not enabled, using regular query")
+            return self.query(
+                question=question,
+                store_name=store_name,
+                metadata_filter=metadata_filter,
+                include_citations=include_citations,
+                user_id=user_id
+            )
+
+        # Use Pydantic wrapper
+        try:
+            response = self.pydantic_wrapper.query(
+                question=question,
+                query_type=None,
+                user_context={
+                    "store_name": store_name,
+                    "metadata_filter": metadata_filter,
+                    "user_id": user_id
+                },
+                force_model=force_model
+            )
+
+            # If structured output enabled, return RAGResponse
+            if self.config.use_structured_output and isinstance(response, RAGResponse):
+                print(f"[EnhancedRAG] ✓ Structured response returned")
+                print(f"  Confidence: {response.confidence:.2f}")
+                print(f"  Model: {response.model_used}")
+                print(f"  Sources: {len(response.sources)}")
+                return response
+
+            # Otherwise return as dict for backward compatibility
+            elif isinstance(response, RAGResponse):
+                return response.to_simple_dict()
+            else:
+                return response
+
+        except Exception as e:
+            print(f"[EnhancedRAG] ⚠ Pydantic query failed: {e}")
+            print("[EnhancedRAG] Falling back to regular query")
+            # Fallback to regular query
+            return self.query(
+                question=question,
+                store_name=store_name,
+                metadata_filter=metadata_filter,
+                include_citations=include_citations,
+                user_id=user_id
+            )
+
+    def get_pydantic_stats(self) -> Optional[Dict[str, Any]]:
+        """Get Pydantic AI statistics (model routing, cost savings, etc.)"""
+        if self.pydantic_wrapper:
+            return self.pydantic_wrapper.get_stats()
+        return None
+
+    def get_cost_savings(self) -> Optional[Dict[str, Any]]:
+        """Get cost savings from model routing"""
+        if self.pydantic_wrapper:
+            return self.pydantic_wrapper.get_cost_savings()
+        return None
 
     def start_experiment(
         self,

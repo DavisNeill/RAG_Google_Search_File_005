@@ -132,3 +132,21 @@ networkx>=3.0
 # - Parent Document Retrieval: No new deps (uses existing retrieval)
 
 # All dependencies for Tier 4-5 improvements are satisfied!
+
+# ============================================================================
+# PYDANTIC AI INTEGRATION (Tier 6 Enhancement)
+# ============================================================================
+
+# Pydantic AI for structured outputs, model routing, and observability
+pydantic-ai>=0.0.14
+pydantic>=2.0.0
+
+# Logfire for observability (local mode, no cloud required)
+logfire>=0.1.0
+
+# NOTE: Pydantic AI features integrated:
+# - Structured Output Validation: Guaranteed valid responses with auto-retry
+# - Model Router: Smart model selection based on query complexity
+# - Logfire Observability: Deep tracing and debugging (local-only mode)
+
+# All dependencies for Pydantic AI integration are satisfied!
