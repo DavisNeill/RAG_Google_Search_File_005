@@ -224,6 +224,80 @@
             background: #c82333;
         }
 
+        /* Admin Navigation */
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            position: relative;
+        }
+
+        .admin-nav-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            position: relative;
+        }
+
+        .admin-nav-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+        }
+
+        .admin-nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .admin-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .admin-dropdown.show {
+            display: block;
+        }
+
+        .admin-dropdown-item {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        .admin-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .admin-dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        .admin-dropdown-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .admin-dropdown-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
         /* Main Content */
         .main-content {
             display: none;
@@ -651,6 +725,18 @@
                 <p>Powered by Gemini File Search + Mem0 Memory</p>
             </div>
             <div class="header-right">
+                <!-- Admin Evaluation Dashboard Navigation -->
+                <div id="adminNav" class="admin-nav" style="display: none; margin-right: 20px;">
+                    <button class="admin-nav-btn" onclick="toggleEvalDropdown()" title="Research Evaluation Dashboard">
+                        🔬 Evaluation ▼
+                    </button>
+                    <div id="evalDropdown" class="admin-dropdown">
+                        <a href="/evaluation/dashboard" class="admin-dropdown-item">📊 Main Dashboard</a>
+                        <a href="/evaluation/runs" class="admin-dropdown-item">📋 All Evaluations</a>
+                        <a href="/evaluation/datasets" class="admin-dropdown-item">📚 Datasets</a>
+                    </div>
+                </div>
+
                 <div class="user-info">
                     <div class="user-email" id="userEmail">user@example.com</div>
                     <div class="user-status">● Online</div>
@@ -893,6 +979,12 @@
                     badge.style.cssText = 'background: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px;';
                     badge.textContent = 'ADMIN';
                     userEmail.parentNode.insertBefore(badge, userEmail.nextSibling);
+                }
+
+                // Show/hide admin navigation for evaluation dashboard
+                const adminNav = document.getElementById('adminNav');
+                if (adminNav) {
+                    adminNav.style.display = isAdmin ? 'flex' : 'none';
                 }
             }
 
@@ -1653,6 +1745,22 @@
         function hideAlert(id) {
             document.getElementById(id).classList.remove('active');
         }
+
+        // Toggle evaluation dropdown menu
+        function toggleEvalDropdown() {
+            const dropdown = document.getElementById('evalDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(e) {
+            if (!e.target.matches('.admin-nav-btn')) {
+                const dropdown = document.getElementById('evalDropdown');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        });
 
         // Enable Enter to submit question
         document.getElementById('questionInput').addEventListener('keydown', function(e) {
