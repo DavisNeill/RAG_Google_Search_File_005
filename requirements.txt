@@ -58,3 +58,45 @@ eventlet>=0.33.3
 
 # WSGI Server
 gunicorn>=21.2.0
+
+# ============================================================================
+# RESEARCH EVALUATION FRAMEWORK (For Journal Publication)
+# ============================================================================
+
+# RAG Evaluation Framework
+ragas>=0.1.0
+
+# Traditional IR Metrics
+scikit-learn>=1.3.0
+rank-bm25>=0.2.2
+
+# Semantic Similarity Metrics
+bert-score>=0.3.13
+sentence-transformers>=2.2.2
+
+# Statistical Analysis
+scipy>=1.11.0
+statsmodels>=0.14.0
+numpy>=1.24.0
+
+# Visualization for Papers
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# LaTeX Export
+tabulate>=0.9.0
+
+# Dataset Handling
+datasets>=2.14.0
+
+# NLP Metrics
+nltk>=3.8.0
+rouge-score>=0.1.2
+
+# Human Evaluation Tools
+flask-wtf>=1.2.0
+
+# Experiment Tracking (Optional)
+# mlflow>=2.8.0
+# wandb>=0.16.0
