@@ -109,9 +109,12 @@ class EnhancedConfig:
         # Tier 6: Pydantic AI Integration
         self.use_pydantic = False  # Enable Pydantic AI features
         self.use_structured_output = False  # Structured, validated responses
-        self.use_model_routing = False  # Smart model selection
+        self.use_model_routing = False  # Smart model selection (automatic)
         self.use_observability = False  # Logfire tracing
         self.pydantic_cost_optimization = "balanced"  # "aggressive", "balanced", "quality"
+
+        # Manual model selection (alternative to routing)
+        self.forced_model = None  # Set to force a specific model: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"
 
         # Performance tuning
         self.retrieve_k = 20  # Retrieve this many candidates
@@ -133,6 +136,54 @@ class EnhancedConfig:
         config.use_experiment_tracking = True
         config.use_multihop = True
         config.use_self_reflection = True
+        return config
+
+    @classmethod
+    def pydantic_flash_config(cls):
+        """
+        Pydantic AI with forced Flash model (ultra-cheap)
+
+        Use for: High-volume, cost-sensitive applications
+        Cost: Minimum ($0.075/1k tokens)
+        """
+        config = cls()
+        config.use_pydantic = True
+        config.use_structured_output = True
+        config.use_model_routing = False
+        config.forced_model = "gemini-1.5-flash"
+        config.use_observability = True
+        return config
+
+    @classmethod
+    def pydantic_pro_config(cls):
+        """
+        Pydantic AI with forced Pro model (high-quality)
+
+        Use for: Critical queries, quality over cost
+        Cost: High ($1.25/1k tokens)
+        """
+        config = cls()
+        config.use_pydantic = True
+        config.use_structured_output = True
+        config.use_model_routing = False
+        config.forced_model = "gemini-1.5-pro"
+        config.use_observability = True
+        return config
+
+    @classmethod
+    def pydantic_auto_config(cls):
+        """
+        Pydantic AI with automatic smart routing (balanced)
+
+        Use for: Production, balanced cost/quality
+        Cost: 40-60% savings vs always-Pro
+        """
+        config = cls()
+        config.use_pydantic = True
+        config.use_structured_output = True
+        config.use_model_routing = True
+        config.pydantic_cost_optimization = "balanced"
+        config.use_observability = True
         return config
 
 
@@ -298,6 +349,7 @@ class EnhancedAgenticRAG:
                 enable_model_routing=self.config.use_model_routing,
                 enable_observability=self.config.use_observability,
                 cost_optimization_level=self.config.pydantic_cost_optimization,
+                force_model=self.config.forced_model,  # Manual model selection
                 enable_cloud_logging=False,  # Local-only by default
                 log_directory="./logs/pydantic",
                 service_name="enhanced-rag"
@@ -313,7 +365,9 @@ class EnhancedAgenticRAG:
             print("[EnhancedRAG] ✓ Pydantic AI features enabled:")
             if self.config.use_structured_output:
                 print("  - Structured Output Validation")
-            if self.config.use_model_routing:
+            if self.config.forced_model:
+                print(f"  - Forced Model: {self.config.forced_model}")
+            elif self.config.use_model_routing:
                 print(f"  - Model Routing ({self.config.pydantic_cost_optimization})")
             if self.config.use_observability:
                 print("  - Logfire Observability")
