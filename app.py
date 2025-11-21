@@ -31,6 +31,7 @@ except ImportError:
     Client = None
 
 from agentic_rag import create_agentic_rag, AgentOrchestrator
+from evaluation_routes import evaluation_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -38,6 +39,9 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 # Enable CORS
 CORS(app)
+
+# Register blueprints
+app.register_blueprint(evaluation_bp)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -75,6 +79,8 @@ def init_supabase():
 
     try:
         supabase_client = create_client(supabase_url, supabase_key)
+        # Make Supabase client available to blueprints
+        app.config['SUPABASE_CLIENT'] = supabase_client
         print("Supabase initialized successfully")
         return True
     except Exception as e:
