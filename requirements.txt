@@ -100,3 +100,20 @@ flask-wtf>=1.2.0
 # Experiment Tracking (Optional)
 # mlflow>=2.8.0
 # wandb>=0.16.0
+
+# ============================================================================
+# TIER 1-3 ARCHITECTURE IMPROVEMENTS (New Features)
+# ============================================================================
+
+# NOTE: Most dependencies for new features are already included above:
+# - Hybrid Search (BM25 + Dense): rank-bm25, numpy (already included)
+# - Citation System: No additional deps (uses existing)
+# - Embedding Cache: redis (already included)
+# - Re-ranking with Cross-Encoders: sentence-transformers (already included)
+# - Query Rewriting/Expansion: Uses existing LLM (no new deps)
+# - Streaming Responses: Flask-SocketIO, eventlet (already included)
+# - Multi-hop Reasoning: Uses existing components (no new deps)
+# - Self-Reflection: Uses existing LLM and metrics (no new deps)
+# - Experiment Tracking: Uses existing database and JSON (no new deps)
+
+# All dependencies for Tier 1-3 improvements are satisfied by the requirements above!
